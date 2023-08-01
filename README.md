@@ -24,9 +24,9 @@ z = 244.824
 ~~~
 
 ## Differences from the original JS-version
-- **Rejecting the use of MergeHistory** - Temporarily replaced by trimming by count of messages. _I will replace it with a more advanced version later._
+- **History Storage**
+- **Rejecting the use of MergeHistory** - Replaced with the limiter of tokens for history (default is 4096 tokens)
 - **Reworked algorithm for processing model response cycles.**
-- **Simple History Storage Manager**
 - **Added free analog of search engine** (DuckDuckGo)
 
 ## Running / developing
