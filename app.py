@@ -12,10 +12,10 @@ load_dotenv()
 from wp_debugger import debug
 
 #Add this Keys to your .env
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if os.getenv("OPENAI_API_BASE"): openai.api_base = os.getenv("OPENAI_API_BASE") #only for azure endpoints
-SERPAPI_KEY = os.getenv("SERPAPI_API_KEY") #you can use Analog Search Engine (find below)
-OPENAI_MODEL = os.getenv("OPENAI_MODEL")
+openai.api_key = os.getenv('OPENAI_API_KEY')
+if os.getenv('OPENAI_API_BASE'): openai.api_base = os.getenv('OPENAI_API_BASE') #only for azure endpoints
+SERPAPI_KEY = os.getenv('SERPAPI_API_KEY') #you can use Analog Search Engine (find below)
+OPENAI_MODEL = os.getenv('OPENAI_MODEL')
 
 # --------------------- History Manager --------------------- #
 class HistoryManager:
@@ -28,7 +28,7 @@ class HistoryManager:
 
     def add_to_history(self, info: List[dict[str, str]]):
         if isinstance(info, dict): self._history.append(info)
-        else: raise TypeError("Expected dictionary")
+        else: raise TypeError('Expected dictionary')
 
     def clear_history(self):
         self._history = []
@@ -67,7 +67,7 @@ class OpenAIUtils:
                 messages=data,
                 temperature=0.7,
                 stream=False,
-                stop=["Observation:"]
+                stop=['Observation:']
             )
             model = response.model
             content = response.choices[0].message.content
@@ -85,28 +85,28 @@ class Tool:
         pass
 
 class Calculator(Tool):
-    description = "Useful for getting the result of a math expression. The input to this tool should be a valid mathematical expression that could be executed by a simple calculator."
+    description = 'Useful for getting the result of a math expression. The input to this tool should be a valid mathematical expression that could be executed by a simple calculator.'
     async def execute(self, input:str) -> str:
-        if "=" in input: input = input.split("=")[1].strip()
+        if '=' in input: input = input.split('=')[1].strip()
         result = eval(input)
         debug(result)
         return result
 
 # SerpAPI Search Engine
 class SearchEngine(Tool):
-    description = "a search engine. Useful for when you need to answer questions about current events. Input should be a search query."
+    description = 'a search engine. Useful for when you need to answer questions about current events. Input should be a search query.'
     async def execute(self, input:str) -> str:
-        params = {"api_key": SERPAPI_KEY,"q": input} 
-        async with httpx.AsyncClient() as client: response = await client.get("https://serpapi.com/search", params=params)
+        params = {'api_key': SERPAPI_KEY,'q': input} 
+        async with httpx.AsyncClient() as client: response = await client.get('https://serpapi.com/search', params=params)
         return response.json().get('answer_box', {}).get('answer') or response.json().get('answer_box', {}).get('snippet') or response.json().get('organic_results', [{}])[0].get('snippet')
     
 # # Analog Search Engine
 # class SearchEngine(Tool):
-#     description = "a search engine. Useful for when you need to answer questions about current events. input should be a search query."
+#     description = 'a search engine. Useful for when you need to answer questions about current events. input should be a search query.'
 #     async def analogSearch(self, input: str) -> str:
 #         async with httpx.AsyncClient() as client:
 #             response = await client.get('https://ddg-api.herokuapp.com/search', params={'query': input, 'region': 'ru-ru', 'limit': 3})
-#         blob = '\n\n'.join([f"[{index+1}] \"{result['snippet']}\"" for index, result in enumerate(response.json())])
+#         blob = '\n\n'.join([f'[{index+1}] \'{result['snippet']}\'' for index, result in enumerate(response.json())])
 #         return blob
 
 # --------------------- Main --------------------- #
@@ -114,14 +114,14 @@ class QuestionAssistant:
     def __init__(self, history_manager: HistoryManager):
         self.history_manager = history_manager
         self.tools = {
-            "Search": SearchEngine(),
-            "Calculator": Calculator()
+            'Search': SearchEngine(),
+            'Calculator': Calculator()
         }
 
     async def complete_prompt(self, prompt: str, historyHook: bool = True) -> str:
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        tools_description = '\n'.join([f"{toolname}: {self.tools[toolname].description}" for toolname in self.tools.keys()])
-        template = f'Knowledge cutoff: 2021-09-01 Current date: {current_date}.\n{promptTemplate.replace("${tools}", tools_description)}'
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        tools_description = '\n'.join([f'{toolname}: {self.tools[toolname].description}' for toolname in self.tools.keys()])
+        template = f'Knowledge cutoff: 2021-09-01 Current date: {current_date}.\n{promptTemplate.replace('${tools}', tools_description)}'
         response = await OpenAIUtils.request_openai(prompt, historyHook, template)
         debug(response)
         return response
@@ -132,20 +132,20 @@ class QuestionAssistant:
         while True:
             action = ''
             response = Utils.prepare(await QuestionAssistant.complete_prompt(self, prompt))
-            if "Action: " in response:        
-                action = Utils.get_value(response, "Action: ")  
+            if 'Action: ' in response:        
+                action = Utils.get_value(response, 'Action: ')  
                 if action in self.tools.keys():                                
-                    actionInput = Utils.get_value(response, "Action Input: ")      
-                    response = response.split("Observation:")[0]
-            if "Final Answer:" in response:
-                result = response.split("Final Answer:")[-1].strip()
+                    actionInput = Utils.get_value(response, 'Action Input: ')      
+                    response = response.split('Observation:')[0]
+            if 'Final Answer:' in response:
+                result = response.split('Final Answer:')[-1].strip()
                 history_manager.add_to_history({'role': 'assistant','content': result})
                 return f'assistant{module_history}: {result}'            
             prompt += '\n' + response
             if action in self.tools.keys():
                 module_history += f'[{action}]'
                 result = await self.tools[action].execute(actionInput)
-                prompt += f"\nObservation: {result}\nThought: "
+                prompt += f'\nObservation: {result}\nThought: '
             prompt = Utils.prepare(prompt)
             debug(prompt)
 
