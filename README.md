@@ -23,7 +23,7 @@ y = 185.65820000000002
 z = 244.824
 ~~~
 
-Expert tool, an attempt to use the [Skeleton-of-Thought](https://arxiv.org/pdf/2307.15337.pdf) idea:
+**Expert tool, an attempt to use the [Skeleton-of-Thought](https://arxiv.org/pdf/2307.15337.pdf) idea:**
 
 ~~~
 **Algorithm**
