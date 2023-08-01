@@ -43,8 +43,8 @@ class HistoryManager:
 
     def trim_history(self):
         sum_tokens = self.get_total_tokens()
-        if sum_tokens > 100:
-            while sum_tokens > 100:
+        if sum_tokens >= 2000:
+            while sum_tokens >= 2000:
                 data = self._history[0]['tokens']
                 sum_tokens -= int(data)                
                 del self._history[0]
