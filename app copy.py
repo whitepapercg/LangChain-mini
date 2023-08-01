@@ -70,7 +70,7 @@ class OpenAIUtils:
     @staticmethod
     async def request_openai(prompt:str, historyHook:bool, template:str = '', model:str = '') -> str:
         if not model: model = OPENAI_MODEL
-        Utils.timeout(20)
+        Utils.timeout(10)
         data = history_manager.dict_to_history if historyHook else []
         if template: data.append({'role': 'system', 'content': template})
         data.append({'role': 'user', 'content': prompt})
@@ -80,7 +80,7 @@ class OpenAIUtils:
                 messages=data,
                 temperature=0.7,
                 stream=False,
-                stop=['Tool Result:']
+                stop=['Action Result:']
             )
             model = response.model
             p_tokens = response.usage.prompt_tokens-319
@@ -103,13 +103,13 @@ class Tool:
         pass
 
 class Expert(Tool):
-    description = "Useful for answering any questions and completing tasks. The input to this tool should be a question provide full information and can't be None."
+    description = "Useful for answering any questions and completing tasks. The input to this tool should be a repeat the user Question and can't be None."
     async def execute(self, input:str) -> str:
         debug(f'[TOOL] Expert: {input}')
         data = await OpenAIUtils.request_openai(f"Question: {input}\nSkeleton:", True, sot_skeletonTemplate)
         skeleton = Utils.prepare(data['content'])
         debug(f'[TOOL] Expert Skeleton: {skeleton}')
-        data = await OpenAIUtils.request_openai('Write a text based on the Skeleton points provided. Write each point **very briefly** in 1∼3 sentences as best you can. End with a final conclusion if required.', True, sot_resultTemplate.replace("${question}", input).replace("${skeleton}", skeleton))
+        data = await OpenAIUtils.request_openai('Continue and only continue to writing point by point. Write each point **very briefly** in 1∼3 sentences and continue writing the other points.', True, sot_resultTemplate.replace("${question}", input).replace("${skeleton}", skeleton), 'gpt-4')
         response = Utils.prepare(data['content'])
         debug(f'[TOOL] Expert Response: {response}')
         return response
@@ -169,11 +169,11 @@ class QuestionAssistant:
                 f_iter = True
             response = Utils.prepare(data['content'])
             len_response = len(response)
-            if 'Tool: ' in response:
-                action = Utils.get_value(response, 'Tool: ')  
+            if 'Action: ' in response:
+                action = Utils.get_value(response, 'Action: ')  
                 if action in self.tools.keys():
-                    actionInput = Utils.get_value(response, 'Tool Input: ')      
-                    response = response.split('Tool Result:')[0]
+                    actionInput = Utils.get_value(response, 'Action Input: ')      
+                    response = response.split('Action Result:')[0]
             if 'Final Answer:' in response:
                 result = response.split('Final Answer:')[-1].strip()
                 answer_tokens = math.ceil(data['c_tokens'] * (len(result) / len_response))       
@@ -185,7 +185,7 @@ class QuestionAssistant:
             if action in self.tools.keys():
                 module_history += f'[{action}]'
                 result = await self.tools[action].execute(actionInput)
-                prompt += f'\nTool Result: {result}\nThought: '
+                prompt += f'\nAction Result: {result}\nThought: '
             prompt = Utils.prepare(prompt)
 
 promptTemplate = open('prompts/prompt.txt', 'r').read()
