@@ -127,7 +127,7 @@ class QuestionAssistant:
         return response
     
     async def answer_question(self, question: str) -> str:
-        prompt = f'Question: {question}' # \nThought: 
+        prompt = f'Question: {question}'
         module_history = ''
         while True:
             action = ''
