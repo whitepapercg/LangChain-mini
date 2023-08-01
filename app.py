@@ -121,7 +121,7 @@ class QuestionAssistant:
     async def complete_prompt(self, prompt: str, historyHook: bool = True) -> str:
         current_date = datetime.now().strftime('%Y-%m-%d')
         tools_description = '\n'.join([f'{toolname}: {self.tools[toolname].description}' for toolname in self.tools.keys()])
-        template = f'Knowledge cutoff: 2021-09-01 Current date: {current_date}.\n{promptTemplate.replace('${tools}', tools_description)}'
+        template = f'Knowledge cutoff: 2021-09-01 Current date: {current_date}.\n{promptTemplate.replace("${tools}", tools_description)}'
         response = await OpenAIUtils.request_openai(prompt, historyHook, template)
         debug(response)
         return response
