@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🦜️🔗 LangChain-mini 
 This is a **python** re-implementation of [LangChain-mini](https://github.com/ColinEberhardt/langchain-mini/), in ~150 lines of code. In essence, it is an LLM (GPT-3.5) powered chat application that is able to use tools (Google search and a calculator) in order to hold conversations and answer questions. 
 
@@ -53,7 +52,3 @@ python app.py
 How can I help? what was the name of the first man on the moon?
 Neil Armstrong
 ~~~
-=======
-# LangChain-mini
-🦜️🔗 This is a python re-implementation of LangChain, in ~150 lines of code
->>>>>>> parent of eacc28d (Update README.md)
