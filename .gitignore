@@ -2,3 +2,4 @@
 .env
 *.bat
 *.log
+wp_debugger.py
