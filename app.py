@@ -1,7 +1,10 @@
+import json
+import math
 import os
 import asyncio
+import aiohttp
 import time
-import re
+import re as r
 from datetime import datetime
 from abc import abstractmethod
 from typing import List
@@ -24,18 +27,29 @@ class HistoryManager:
         self._history = []
 
     @property
-    def history(self) -> List[dict[str, str]]:
+    def history(self) -> List[dict[str, str, int]]: #role, content, tokens length
         return self._history
 
-    def add_to_history(self, info: List[dict[str, str]]):
+    @property
+    def read_history(self) -> List[dict[str, str]]:
+        return [{k: d[k] for k in ['role','content'] if k in d} for d in self._history]
+    
+    def get_total_tokens(self) -> int:
+        return sum(key['tokens'] for key in self.history)
+
+    def add_to_history(self, info: List[dict[str, str, int]]):
         if isinstance(info, dict): self._history.append(info)
         else: raise TypeError('Expected dictionary')
 
-    def clear_history(self):
-        self._history = []
+    def trim_history(self):
+        sum_tokens = self.get_total_tokens()
+        if sum_tokens > 100:
+            while sum_tokens > 100:
+                data = self._history[0]['tokens']
+                sum_tokens -= int(data)                
+                del self._history[0]
+            print(f'[TOOL] History is pruned to {str(sum_tokens)} tokens')
 
-    def trim_history(self, n: int) -> List[dict[str, str]]:
-        return self._history if n >= len(self._history) else self._history[-n:]
 
 # --------------------- Utils Handlers --------------------- #
 class Utils:
@@ -57,8 +71,7 @@ class OpenAIUtils:
     @staticmethod
     async def request_openai(prompt:str, historyHook:bool, template:str = '') -> str:
         Utils.timeout(10)
-        history_manager.trim_history(8)
-        data = history_manager.history if historyHook else []
+        data = history_manager.read_history if historyHook else []
         if template: data.append({'role': 'system', 'content': template})
         data.append({'role': 'user', 'content': prompt})
         try:
@@ -70,8 +83,13 @@ class OpenAIUtils:
                 stop=['Observation:']
             )
             model = response.model
-            content = response.choices[0].message.content
-            return content
+            p_tokens = response.usage.prompt_tokens-209
+            data = {
+                'p_tokens': p_tokens,
+                'c_tokens': response.usage.completion_tokens,
+                'content': response.choices[0].message.content
+                }
+            return data
         except openai.error.APIError as e:
             if hasattr(e, 'response') and 'detail' in e.response: error_message = e.response['detail']
             else: error_message = str(e)
@@ -88,22 +106,25 @@ class Calculator(Tool):
     description = 'Useful for getting the result of a math expression. The input to this tool should be a valid mathematical expression that could be executed by a simple calculator.'
     async def execute(self, input:str) -> str:
         if '=' in input: input = input.split('=')[1]
-        result = eval(re.sub(r"[^0-9\-+=/:.,*]", "", input).strip())
-        debug(result)
+        parse = str(parse_expr(r.sub(r"[^0-9\-+=/:.,*]", "", input)))
+        result = eval(parse)
+        debug(f'[TOOL] Calculation: {input} = {result}')
         return result
 
 # SerpAPI Search Engine
 class SearchEngine(Tool):
     description = 'a search engine. Useful for when you need to answer questions about current events. Input should be a search query.'
     async def execute(self, input:str) -> str:
+        debug(f'[TOOL] Search: {input}')
         params = {'api_key': SERPAPI_KEY,'q': input} 
         async with httpx.AsyncClient() as client: response = await client.get('https://serpapi.com/search', params=params)
         return response.json().get('answer_box', {}).get('answer') or response.json().get('answer_box', {}).get('snippet') or response.json().get('organic_results', [{}])[0].get('snippet')
-    
+
 # # Analog Search Engine
 # class SearchEngine(Tool):
 #     description = 'a search engine. Useful for when you need to answer questions about current events. input should be a search query.'
 #     async def analogSearch(self, input: str) -> str:
+#         debug(f'[TOOL] Search: {input}')
 #         async with httpx.AsyncClient() as client:
 #             response = await client.get('https://ddg-api.herokuapp.com/search', params={'query': input, 'region': 'ru-ru', 'limit': 3})
 #         blob = '\n\n'.join([f'[{index+1}] \'{result['snippet']}\'' for index, result in enumerate(response.json())])
@@ -119,36 +140,40 @@ class QuestionAssistant:
         }
 
     async def complete_prompt(self, prompt: str, historyHook: bool = True) -> str:
-        current_date = datetime.now().strftime('%Y-%m-%d')
         tools_description = '\n'.join([f'{toolname}: {self.tools[toolname].description}' for toolname in self.tools.keys()])
-        template = f'Knowledge cutoff: 2021-09-01 Current date: {current_date}.\n{promptTemplate.replace("${tools}", tools_description)}'
+        template = f'Knowledge cutoff: 2021-09-01 Current date: {datetime.now().strftime("%Y-%m-%d")}.\n{promptTemplate.replace("${tools}", tools_description)}'
         response = await OpenAIUtils.request_openai(prompt, historyHook, template)
-        debug(response)
         return response
-    
+
     async def answer_question(self, question: str) -> str:
         prompt = f'Question: {question}'
         module_history = ''
         while True:
-            action = ''
-            response = Utils.prepare(await QuestionAssistant.complete_prompt(self, prompt))
-            print(str(response))
-            if 'Action: ' in response:        
+            action = ''                      
+            data = await QuestionAssistant.complete_prompt(self, prompt)   
+            if 'f_iter' not in locals():
+                question_tokens = data['p_tokens']       
+                f_iter = True
+            response = Utils.prepare(data['content'])
+            len_response = len(response)
+            if 'Action: ' in response:
                 action = Utils.get_value(response, 'Action: ')  
                 if action in self.tools.keys():                                
                     actionInput = Utils.get_value(response, 'Action Input: ')      
                     response = response.split('Observation:')[0]
             if 'Final Answer:' in response:
                 result = response.split('Final Answer:')[-1].strip()
-                history_manager.add_to_history({'role': 'assistant','content': result})
-                return f'assistant{module_history}: {result}'            
+                answer_tokens = math.ceil(data['c_tokens'] * (len(result) / len_response))       
+                history_manager.add_to_history({'role': 'user','content': question, 'tokens': question_tokens})
+                history_manager.add_to_history({'role': 'assistant','content': result, 'tokens': answer_tokens})
+                history_manager.trim_history()
+                return f'assistant{module_history}: {result}'
             prompt += '\n' + response
             if action in self.tools.keys():
                 module_history += f'[{action}]'
                 result = await self.tools[action].execute(actionInput)
                 prompt += f'\nObservation: {result}\nThought: '
             prompt = Utils.prepare(prompt)
-            debug(prompt)
 
 promptTemplate = open('prompt.txt', 'r').read()
 history_manager = HistoryManager()
@@ -156,6 +181,5 @@ assistant = QuestionAssistant(history_manager)
 
 while True:
     question = input('user: ')
-    history_manager.add_to_history({'role': 'user','content': question})
     answer = asyncio.run(assistant.answer_question(question))    
     print(answer)

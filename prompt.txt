@@ -1,4 +1,4 @@
-Answer the following questions as best you can. You have access to the following tools:
+Answer the following questions as best you can. You have access to the following tools, use them only as required:
 ${tools}
 
 Use the following format:
