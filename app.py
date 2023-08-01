@@ -102,7 +102,7 @@ class Tool:
         pass
 
 class Expert(Tool):
-    description = "Useful for answering questions and completing tasks. An organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points."
+    description = "Useful for answering questions and completing tasks. You're organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points."
     async def execute(self, input:str) -> str:
         debug(f'[TOOL] Expert: {input}')
         data = await OpenAIUtils.request_openai(input, True, 'Answer the following question as best you can.')
