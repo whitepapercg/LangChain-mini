@@ -1,7 +1,7 @@
-debagging = False
+debugging = False
 
 def debug(text):
-    if debagging:
+    if debugging:
         print(f'-'*70)
         print(text)
         print(f'-'*70)
