@@ -82,7 +82,7 @@ class OpenAIUtils:
                 stop=['Observation:']
             )
             model = response.model
-            p_tokens = response.usage.prompt_tokens-209
+            p_tokens = response.usage.prompt_tokens-319
             data = {
                 'p_tokens': p_tokens,
                 'c_tokens': response.usage.completion_tokens,
@@ -92,7 +92,7 @@ class OpenAIUtils:
         except openai.error.APIError as e:
             if hasattr(e, 'response') and 'detail' in e.response: error_message = e.response['detail']
             else: error_message = str(e)
-            return error_message
+            print(error_message)
 
 # --------------------- AITools Handlers --------------------- #
 class Tool:
@@ -101,8 +101,17 @@ class Tool:
     async def execute(self, input:str):
         pass
 
+class Expert(Tool):
+    description = "Useful for answering questions and completing tasks. You're organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points."
+    async def execute(self, input:str) -> str:
+        debug(f'[TOOL] Expert: {input}')
+        data = await OpenAIUtils.request_openai(input, True, 'Answer the following question as best you can.')
+        response = Utils.prepare(data['content'])
+        debug(f'[TOOL] Expert Response: {response}')
+        return response
+
 class Calculator(Tool):
-    description = 'Useful for getting the result of a math expression. The input to this tool should be a valid mathematical expression that could be executed by a simple calculator.'
+    description = 'Useful for getting the result of a math expression. Input should be a valid mathematical expression that could be executed by a simple calculator.'
     async def execute(self, input:str) -> str:
         if '=' in input: input = input.split('=')[1]
         parse = str(parse_expr(r.sub(r"[^0-9\-+=/:.,*]", "", input)))
@@ -134,8 +143,9 @@ class QuestionAssistant:
     def __init__(self, history_manager: HistoryManager):
         self.history_manager = history_manager
         self.tools = {
-            'Search': SearchEngine(),
-            'Calculator': Calculator()
+            'Expert': Expert(),
+            'Calculator': Calculator(),
+            'Search': SearchEngine()
         }
 
     async def complete_prompt(self, prompt: str, historyHook: bool = True) -> str:
@@ -145,11 +155,11 @@ class QuestionAssistant:
         return response
 
     async def answer_question(self, question: str) -> str:
-        prompt = f'Question: {question}'
+        prompt = f'Question: {question}\nThought:'
         module_history = ''
         while True:
             action = ''                      
-            data = await QuestionAssistant.complete_prompt(self, prompt)   
+            data = await QuestionAssistant.complete_prompt(self, prompt)
             if 'f_iter' not in locals():
                 question_tokens = data['p_tokens']       
                 f_iter = True
@@ -157,9 +167,9 @@ class QuestionAssistant:
             len_response = len(response)
             if 'Action: ' in response:
                 action = Utils.get_value(response, 'Action: ')  
-                if action in self.tools.keys():                                
+                if action in self.tools.keys():
                     actionInput = Utils.get_value(response, 'Action Input: ')      
-                    response = response.split('Observation:')[0]
+                    response = response.split('Action Result:')[0]
             if 'Final Answer:' in response:
                 result = response.split('Final Answer:')[-1].strip()
                 answer_tokens = math.ceil(data['c_tokens'] * (len(result) / len_response))       
@@ -171,7 +181,7 @@ class QuestionAssistant:
             if action in self.tools.keys():
                 module_history += f'[{action}]'
                 result = await self.tools[action].execute(actionInput)
-                prompt += f'\nObservation: {result}\nThought: '
+                prompt += f'\nAction Result: {result}\nThought: '
             prompt = Utils.prepare(prompt)
 
 promptTemplate = open('prompt.txt', 'r').read()
