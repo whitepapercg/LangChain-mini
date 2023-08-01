@@ -1,6 +1,7 @@
 import os
 import asyncio
 import time
+import re
 from datetime import datetime
 from abc import abstractmethod
 from typing import List
@@ -9,7 +10,7 @@ import openai
 from sympy import *
 from dotenv import load_dotenv
 load_dotenv()
-from wp_debugger import debug
+from wp_debugger import debug #can be replaced by print()
 
 #Add this Keys to your .env
 openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -45,12 +46,11 @@ class Utils:
     def prepare(text):        
         return '\n'.join(line for line in text.split('\n') if line.strip())
 
-    def timeout(THRESHOLD_SECONDS):
-        LOG_FILE = 'request_data.log'
-        last_request_time = datetime.fromisoformat(open(LOG_FILE, 'r').read().strip()) if os.path.exists(LOG_FILE) else datetime.min
-        time_diff = (datetime.now() - last_request_time).total_seconds()
+    last_request_time = datetime.min
+    def timeout(THRESHOLD_SECONDS):               
+        time_diff = (datetime.now() - Utils.last_request_time).total_seconds()
         if time_diff < THRESHOLD_SECONDS: time.sleep(THRESHOLD_SECONDS - time_diff)            
-        with open(LOG_FILE, 'w') as f: f.write(datetime.now().isoformat())
+        Utils.last_request_time = datetime.now()
 
 
 class OpenAIUtils:
@@ -87,8 +87,8 @@ class Tool:
 class Calculator(Tool):
     description = 'Useful for getting the result of a math expression. The input to this tool should be a valid mathematical expression that could be executed by a simple calculator.'
     async def execute(self, input:str) -> str:
-        if '=' in input: input = input.split('=')[1].strip()
-        result = eval(input)
+        if '=' in input: input = input.split('=')[1]
+        result = eval(re.sub(r"[^0-9\-+=/:.,*]", "", input).strip())
         debug(result)
         return result
 
@@ -127,11 +127,12 @@ class QuestionAssistant:
         return response
     
     async def answer_question(self, question: str) -> str:
-        prompt = f'Question: {question}' # \nThought: 
+        prompt = f'Question: {question}'
         module_history = ''
         while True:
             action = ''
             response = Utils.prepare(await QuestionAssistant.complete_prompt(self, prompt))
+            print(str(response))
             if 'Action: ' in response:        
                 action = Utils.get_value(response, 'Action: ')  
                 if action in self.tools.keys():                                
