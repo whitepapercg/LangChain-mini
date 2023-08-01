@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🦜️🔗 LangChain-mini 
 This is a **python** re-implementation of [LangChain-mini](https://github.com/ColinEberhardt/langchain-mini/), in ~150 lines of code. In essence, it is an LLM (GPT-3.5) powered chat application that is able to use tools (Google search and a calculator) in order to hold conversations and answer questions. 
 
@@ -8,6 +9,7 @@ user: Who won the 2022 World Cup?
 assistant[Search]: The winner of the 2022 World Cup was the Argentina national football team.
 user: Who has scored the most goals and how many in this championship?
 assistant[Search]: The player who scored the most goals in the 2022 World Cup was Kylian Mbappé with a total of 8 goals.
+user: How many goals have scored in this championship not counting his goals?
 ~~~
 
 An example of simple math calculation and sequential tool usage.
@@ -26,7 +28,7 @@ z = 244.824
 - **Rejecting the use of MergeHistory** - Temporarily replaced by trimming by count of messages. _I will replace it with a more advanced version later._
 - **Reworked algorithm for processing model response cycles.**
 - **Simple History Storage Manager**
-- **Added free analog of search engine** _(DuckDuckGo)_
+- **Added free analog of search engine** (DuckDuckGo)
 
 ## Running / developing
 
@@ -51,3 +53,7 @@ python app.py
 How can I help? what was the name of the first man on the moon?
 Neil Armstrong
 ~~~
+=======
+# LangChain-mini
+🦜️🔗 This is a python re-implementation of LangChain, in ~150 lines of code
+>>>>>>> parent of eacc28d (Update README.md)
