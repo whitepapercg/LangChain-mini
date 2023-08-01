@@ -1,4 +1,4 @@
-debugging = False
+debugging = True
 
 def debug(text):
     if debugging:
