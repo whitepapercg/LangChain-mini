@@ -1,7 +1,8 @@
+<<<<<<< HEAD
 # 🦜️🔗 LangChain-mini 
 This is a **python** re-implementation of [LangChain-mini](https://github.com/ColinEberhardt/langchain-mini/), in ~150 lines of code. In essence, it is an LLM (GPT-3.5) powered chat application that is able to use tools (Google search and a calculator) in order to hold conversations and answer questions. 
 
-Here's an example:
+Here's an example of using search tool:
 
 ~~~
 user: Who won the 2022 World Cup?
@@ -11,7 +12,7 @@ assistant[Search]: The player who scored the most goals in the 2022 World Cup wa
 user: How many goals have scored in this championship not counting his goals?
 ~~~
 
-An example of simple math expression and sequential tool usage.
+An example of simple math calculation and sequential tool usage.
 
 ~~~
 user: Help me solve the equation x=(12*34)*56/78/9
@@ -52,3 +53,7 @@ python app.py
 How can I help? what was the name of the first man on the moon?
 Neil Armstrong
 ~~~
+=======
+# LangChain-mini
+🦜️🔗 This is a python re-implementation of LangChain, in ~150 lines of code
+>>>>>>> parent of eacc28d (Update README.md)
