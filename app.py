@@ -31,7 +31,7 @@ class HistoryManager:
         return self._history
 
     @property
-    def read_history(self) -> List[dict[str, str]]:
+    def dict_to_history(self) -> List[dict[str, str]]:
         return [{k: d[k] for k in ['role','content'] if k in d} for d in self._history]
     
     def get_total_tokens(self) -> int:
@@ -43,13 +43,12 @@ class HistoryManager:
 
     def trim_history(self):
         sum_tokens = self.get_total_tokens()
-        if sum_tokens >= 2000:
-            while sum_tokens >= 2000:
-                data = self._history[0]['tokens']
-                sum_tokens -= int(data)                
+        if sum_tokens >= 4096:
+            while sum_tokens >= 4096:
+                tokens = self._history[0]['tokens']
+                sum_tokens -= int(tokens)                
                 del self._history[0]
             print(f'[TOOL] History is pruned to {str(sum_tokens)} tokens')
-
 
 # --------------------- Utils Handlers --------------------- #
 class Utils:
@@ -71,7 +70,7 @@ class OpenAIUtils:
     @staticmethod
     async def request_openai(prompt:str, historyHook:bool, template:str = '') -> str:
         Utils.timeout(10)
-        data = history_manager.read_history if historyHook else []
+        data = history_manager.dict_to_history if historyHook else []
         if template: data.append({'role': 'system', 'content': template})
         data.append({'role': 'user', 'content': prompt})
         try:
