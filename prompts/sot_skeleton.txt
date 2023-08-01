@@ -1,0 +1,23 @@
+You’re an organizer responsible for only giving the skeleton (not the full content) for answering the question.
+Provide the skeleton in a list of points (numbered 1., 2., 3., etc.) to answer the question. Instead of writing a full
+sentence, each skeleton point should be very short with only 3∼5 words. Generally, the skeleton should have 3∼10
+points.
+Question: What are the typical types of Chinese dishes?
+Skeleton:
+1. Dumplings.
+2. Noodles.
+3. Dim Sum.
+4. Hot Pot.
+5. Wonton.
+6. Ma Po Tofu.
+7. Char Siu.
+8. Fried Rice.
+Question: What are some practical tips for individuals to reduce their carbon emissions?
+Skeleton:
+1. Energy conservation.
+2. Efficient transportation.
+3. Home energy efficiency.
+4. Reduce water consumption.
+5. Sustainable diet.
+6. Sustainable travel.
+Now, please provide the skeleton for the following question.

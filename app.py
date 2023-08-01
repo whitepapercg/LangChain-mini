@@ -68,14 +68,15 @@ class Utils:
 
 class OpenAIUtils:
     @staticmethod
-    async def request_openai(prompt:str, historyHook:bool, template:str = '') -> str:
+    async def request_openai(prompt:str, historyHook:bool, template:str = '', model = '') -> str:
+        if not model: model = OPENAI_MODEL
         Utils.timeout(10)
         data = history_manager.dict_to_history if historyHook else []
         if template: data.append({'role': 'system', 'content': template})
         data.append({'role': 'user', 'content': prompt})
         try:
             response = openai.ChatCompletion.create(
-                model=OPENAI_MODEL,
+                model=model,
                 messages=data,
                 temperature=0.7,
                 stream=False,
@@ -102,10 +103,13 @@ class Tool:
         pass
 
 class Expert(Tool):
-    description = "Useful for answering questions and completing tasks. You're organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points."
+    description = "Useful for answering any questions and completing tasks. Input should repeat the User Question."
     async def execute(self, input:str) -> str:
         debug(f'[TOOL] Expert: {input}')
-        data = await OpenAIUtils.request_openai(input, True, 'Answer the following question as best you can.')
+        data = await OpenAIUtils.request_openai(f"Question: {input}\nSkeleton:", True, sot_skeletonTemplate)
+        response = Utils.prepare(data['content'])
+        debug(f'[TOOL] Expert Skeleton: {response}')
+        data = await OpenAIUtils.request_openai('Continue and only continue to writing point by point. Write each point **very briefly** in 1∼3 sentences and continue writing the other points.', True, sot_resultTemplate.replace("${question}", input).replace("${skeleton}", response), 'gpt-4')
         response = Utils.prepare(data['content'])
         debug(f'[TOOL] Expert Response: {response}')
         return response
@@ -184,7 +188,9 @@ class QuestionAssistant:
                 prompt += f'\nAction Result: {result}\nThought: '
             prompt = Utils.prepare(prompt)
 
-promptTemplate = open('prompt.txt', 'r').read()
+promptTemplate = open('prompts/prompt.txt', 'r').read()
+sot_skeletonTemplate = open('prompts/sot_skeleton.txt', 'r').read()
+sot_resultTemplate = open('prompts/sot_result.txt', 'r').read()
 history_manager = HistoryManager()
 assistant = QuestionAssistant(history_manager)
 
