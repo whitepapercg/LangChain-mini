@@ -89,15 +89,9 @@ Question > LLM (Skeleton creator) > Question + SoT > LLM (Expert)
 ~~~
 Prompt-preparer for Expert tool
 ~~~
-Useful for answering questions and completing tasks. You're organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points.
-=======
-**Algorithm**
-~~~
-Question > LLM (Skeleton creator) > Question + SoT > LLM (Expert)
-~~~
-**Prompt-preparer for Expert tool**
-~~~
-Useful for answering any questions and complete any tasks. An organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a provided Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points.
+You’re an organizer responsible for only giving the skeleton (not the full content) for answering the question.
+Provide the skeleton in a list of points (numbered 1., 2., 3., etc.) to answer the question.
+Instead of writing a full sentence, each skeleton point should be very short with only 3∼5 words. Generally, the skeleton should have 3∼10 points.
 ~~~
 
 ## Differences from the original JS-version
