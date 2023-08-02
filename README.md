@@ -24,6 +24,73 @@ z = 244.824
 ~~~
 
 **Expert tool, an attempt to use the [Skeleton-of-Thought](https://arxiv.org/pdf/2307.15337.pdf) idea:**
+
+~~~
+user: Use expert to write python code that outputs the current time as words
+
+[TOOL] Expert Query: Python code to output current time as words
+[TOOL] Expert Skeleton:
+1. Import the necessary modules.
+2. Get the current time.
+3. Convert the current time to words.
+4. Print the current time in words.
+[TOOL] Expert Response:
+1. To begin, we need to import the necessary modules in order to work with time and convert it to words. This can be done using the `datetime` module in Python.
+2. Next, we can use the `datetime.now()` function to get the current time.
+3. To convert the current time to words, we can define a function that takes the hour and minute values and returns the corresponding words. We can use a combination of if-else statements and dictionaries to map the numbers to words.
+4. Finally, we can print the current time in words using the function we defined in step 3. We can pass the hour and minute values obtained in step 2 to this function and display the result.
+In conclusion, by following these steps, we can write a Python code that outputs the current time as words.
+
+assistant[Expert]: Here is the Python code to output the current time as words:
+```python
+from datetime import datetime
+def time_to_words(hour, minute):
+    # Define dictionaries for mapping numbers to words
+    hours = {
+        1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine",
+        10: "ten", 11: "eleven", 12: "twelve"
+    }
+    minutes = {
+        0: "o'clock", 1: "one minute", 2: "two minutes", 3: "three minutes", 4: "four minutes", 5: "five minutes",
+        6: "six minutes", 7: "seven minutes", 8: "eight minutes", 9: "nine minutes", 10: "ten minutes",
+        11: "eleven minutes", 12: "twelve minutes", 13: "thirteen minutes", 14: "fourteen minutes",
+        15: "quarter", 16: "sixteen minutes", 17: "seventeen minutes", 18: "eighteen minutes",
+        19: "nineteen minutes", 20: "twenty minutes", 21: "twenty-one minutes", 22: "twenty-two minutes",
+        23: "twenty-three minutes", 24: "twenty-four minutes", 25: "twenty-five minutes", 26: "twenty-six minutes",
+        27: "twenty-seven minutes", 28: "twenty-eight minutes", 29: "twenty-nine minutes", 30: "half"
+    }
+    # Convert hour to words
+    if hour > 12:
+        hour -= 12
+    hour_word = hours.get(hour)
+    # Convert minute to words
+    minute_word = minutes.get(minute)
+    # Construct the time in words
+    if minute == 0:
+        time_word = f"It's {hour_word} {minute_word}"
+    elif minute <= 30:
+        time_word = f"It's {minute_word} past {hour_word}"
+    else:
+        minute_word = minutes.get(60 - minute)
+        hour_word = hours.get((hour % 12) + 1)
+        time_word = f"It's {minute_word} to {hour_word}"
+    return time_word
+current_time = datetime.now().time()
+hour = current_time.hour
+minute = current_time.minute
+print(time_to_words(hour, minute))
+```
+This code will output the current time as words in the format "It's [time] [past/to] [hour]". For example, if the current time is 2:45, it will output "It's quarter to three".
+~~~
+
+Algorithm
+~~~
+Question > LLM (Skeleton creator) > Question + SoT > LLM (Expert)
+~~~
+Prompt-preparer for Expert tool
+~~~
+Useful for answering questions and completing tasks. You're organizer responsible only giving the skeleton (not the full content) for answering the question. Provide to input of this tool a Question with a Skeleton in a list of points (numbered 1, 2, 3, etc.) to answer the question. Instead of writing a full sentence, each skeleton point should be very short, only 3-5 words. Generally, the skeleton should have 3-10 points.
+=======
 **Algorithm**
 ~~~
 Question > LLM (Skeleton creator) > Question + SoT > LLM (Expert)

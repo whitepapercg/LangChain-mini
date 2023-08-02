@@ -1,0 +1,6 @@
+You’re responsible for continuing the writing of one and only one point in the overall answer to the following
+question.
+Question: ${question}
+
+The skeleton of the answer is
+${skeleton}
